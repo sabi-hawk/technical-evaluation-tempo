@@ -1,23 +1,43 @@
 import logo from './logo.svg';
 import './App.css';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 function App() {
+  const [storyIds, setStoryIds] = useState([]);
+  const [titles, setTitles] = useState([]);
+  useEffect(() => {
+    const fetchStories = async() => {
+      try {
+        const response = await axios.get('https://hacker-news.firebaseio.com/v0/topstories.json')
+        setStoryIds(response.data);
+
+
+        const titlePromises = response.data.map((id) =>
+          axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
+        );
+
+        const stories = await Promise.all(titlePromises);
+        const storyTitles = stories.map((res) => res.data?.title || 'No Title');
+        setTitles(storyTitles);
+        console.log(response.data)
+      } catch (err) {
+        console.log("Error")
+      }
+    }
+
+    fetchStories();
+  },[]);
+
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h2>List of Story Titles</h2>
+      <ul>
+        {titles.map((title, index) => (
+          <li key={index}>{title}</li>
+        ))}
+      </ul>
     </div>
   );
 }
